@@ -15,11 +15,13 @@
               :let [value (get loaded-item (if (map? column)
                                              (:table column)
                                              column))]]
-          [:div.postgrest-ui-item-view-item
-           [:div.postgrest-ui-item-view-label
-            (display/label table column)]
-           [:div.postgrest-ui-item-view-value
-            [display/disp :item-view table column value]]]))]
+          (with-meta
+            [:div.postgrest-ui-item-view-item
+             [:div.postgrest-ui-item-view-label
+              (display/label table column)]
+             [:div.postgrest-ui-item-view-value
+              [display/disp :item-view table column value]]]
+            {:key column})))]
 
       ;; Load item
       (do
