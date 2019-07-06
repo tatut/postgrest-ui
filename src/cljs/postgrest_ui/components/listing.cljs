@@ -4,51 +4,9 @@
             [postgrest-ui.components.scroll-sensor :as scroll-sensor]
             [postgrest-ui.impl.registry :as registry]
             [postgrest-ui.impl.fetch :as fetch]
+            [postgrest-ui.display :as display]
             [clojure.string :as str])
   (:require-macros [postgrest-ui.impl.state :refer [define-stateful-component]]))
-
-(defmulti format-column-label
-  "Format a column label for the given table and column specificaiton. Must return valid hiccup."
-  (fn [table column]
-    [table column]))
-
-(defmulti format-value
-  "Format a value for the given table and column specification. Must return valid hiccup.
-  Default implementation stringifies normal values and combines all fields of a subselect into a
-  element."
-  (fn [table column value]
-    [table column]))
-
-(defmethod format-column-label :default [table column]
-  (if (map? column)
-    (let [{:keys [table select]} column]
-      (str table "(" (str/join "," select) ")"))
-    (str column)))
-
-(defmethod format-value :default [_ column value]
-  (if (map? column)
-    ;; Map describing a subselect, format all values
-    (let [{:keys [table select]} column
-          format-fields (fn [key value]
-                          ^{:key key}
-                          [:div.postgrest-ui-listing-multi
-                           (doall
-                            (for [column select
-                                  :let [v (get value column)]]
-                              ^{:key column}
-                              [:span (format-value table column v)]))])]
-      (if (vector? value)
-        ;; Multiple entries, show all
-        [:div.postgrest-ui-listing-array
-         (doall
-          (map-indexed
-           (fn [i value]
-             (format-fields i value))
-           value))]
-        (format-fields "one" value)))
-
-    ;; Regular value, just stringify
-    (str value)))
 
 (defn- listing-header [{:keys [table select on-click column-widths]} order-by]
   [:thead
@@ -63,7 +21,7 @@
               [:td.postgrest-ui-header-cell (merge {:on-click #(on-click column order)}
                                                    (when width
                                                      {:style {:width width}}))
-               (format-column-label table column)
+               (display/label table column)
                [:div {:class (case order
                                :asc "postgrest-ui-listing-header-order-asc"
                                :desc "postgrest-ui-listing-header-order-desc"
@@ -98,7 +56,7 @@
                                                 (:table column)
                                                 column))]]
                     ^{:key column}
-                    [:td [format-value table column value]]))]]
+                    [:td [display/disp :listing table column value]]))]]
 
                ;; If drawer component is specified and open for this row
                (when (and drawer (get drawer-open item))
