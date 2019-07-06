@@ -10,7 +10,6 @@
                                 (contains? (first args#) :set-state!))
                          nil
                          (reagent.core/atom nil))]
-       (.log js/console "luotiinpa state" state-atom#)
        (fn [& args#]
          (let [~args args# ; destructure arguments
                ~state (or state-atom#
