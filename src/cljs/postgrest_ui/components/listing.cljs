@@ -60,7 +60,7 @@
                                  dir))
                              order-by)]]
        ^{:key column}
-       [:td.postgrest-ui-header-cell {:on-click on-click}
+       [:td.postgrest-ui-header-cell {:on-click #(on-click column order)}
         (format-column-label table column)
         [:div {:class (case order
                         :asc "postgrest-ui-listing-header-order-asc"
@@ -99,7 +99,8 @@
           load-batch! (fn [batch-number]
                         (swap! state merge {:loading? true})
                         (-> (fetch/load-range endpoint defs
-                                              (select-keys opts [:table :select :order-by])
+                                              (merge (select-keys opts [:table :select])
+                                                     {:order-by order-by})
                                               (* batch-number batch-size)
                                               batch-size)
                             (.then #(swap! state merge
@@ -111,7 +112,14 @@
                              (load-batch! 0))]
       [:<>
        [:table.postgrest-ui-listing {:cellSpacing "0" :cellPadding "0"}
-        [listing-header (select-keys opts [:table :select :label]) order-by]
+        [listing-header (merge
+                         (select-keys opts [:table :select])
+                         {:on-click (fn [col current-order-by]
+                                      (swap! state merge {:batches nil ; reload everything
+                                                          :order-by [[col (if (= :asc current-order-by)
+                                                                            :desc
+                                                                            :asc)]]}))})
+         order-by]
         (if initial-loading?
           ^{:key "initial-loading"}
           [:tbody
