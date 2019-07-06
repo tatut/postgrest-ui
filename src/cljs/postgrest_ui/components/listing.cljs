@@ -5,69 +5,92 @@
             [postgrest-ui.impl.registry :as registry]
             [postgrest-ui.impl.fetch :as fetch]
             [postgrest-ui.display :as display]
+            [postgrest-ui.elements :refer [element]]
+            [postgrest-ui.impl.elements]
             [clojure.string :as str])
   (:require-macros [postgrest-ui.impl.state :refer [define-stateful-component]]))
 
-(defn- listing-header [{:keys [table select on-click column-widths]} order-by]
-  [:thead
-   [:tr
-    (doall
-     (map (fn [column width]
-            (let [order (some (fn [[col dir]]
-                                 (when (= col column)
-                                   dir))
-                              order-by)]
-              ^{:key column}
-              [:td.postgrest-ui-header-cell (merge {:on-click #(on-click column order)}
-                                                   (when width
-                                                     {:style {:width width}}))
-               (display/label table column)
-               [:div {:class (case order
-                               :asc "postgrest-ui-listing-header-order-asc"
-                               :desc "postgrest-ui-listing-header-order-desc"
-                               "postgrest-ui-listing-header-cell-order-none")}]]))
-          select (or column-widths (repeat nil))))]])
+(defn- listing-header [{:keys [table select on-click column-widths style]} order-by]
+  (element style :listing-table-head
+           (element style :listing-table-header-row
+                    (doall
+                     (map (fn [column width]
+                            (let [order (some (fn [[col dir]]
+                                                (when (= col column)
+                                                  dir))
+                                              order-by)]
+                              (with-meta
+                                (element style :listing-table-header-cell
+                                         (merge {:on-click #(on-click column order)}
+                                                (when width
+                                                  {:style {:width width}}))
+                                         (display/label table column)
+                                         order)
+                                {:key column})))
+                          select (or column-widths (repeat nil)))))))
 
-(defn- listing-batch [{:keys [table select
+(defn- listing-batch [_ _ _]
+  (r/create-class
+   {:should-component-update
+    (fn [_
+         [_ {old-drawer-open :drawer-open} _ old-items]
+         [_ {new-drawer-open :drawer-open} _ new-items]]
+      (or
+       ;; Items have changed (shouldn't happen in normal listing views)
+       (not (identical? old-items new-items))
+
+       ;; Drawer state change
+       (and
+        ;; Some drawer state has changed
+        (not= old-drawer-open new-drawer-open)
+
+        ;; And it affects a row in this batch
+        (not= (set (keep old-drawer-open old-items))
+              (set (keep new-drawer-open new-items))))))
+    :reagent-render
+    (fn [{:keys [table select style
                               drawer
                               drawer-open
                               toggle-drawer!]}
-                      start-offset items]
-  [:tbody
-   (doall
-    (mapcat
-     (fn [i item]
-       (let [drawer-open? (get drawer-open item)]
-         (into [^{:key i}
-                [:tr {:class (str (if (even? (+ start-offset i))
-                                    "postgrest-ui-listing-row-even"
-                                    "postgrest-ui-listing-row-odd")
-                                  (when drawer
-                                    (if drawer-open?
-                                      " postgrest-ui-listing-row-drawer-open"
-                                      " postgrest-ui-listing-row-drawer-closed")))
-                      :on-click (when drawer
-                                  #(do
-                                     (.preventDefault %)
-                                     (toggle-drawer! item)))}
-                 (doall
-                  (for [column select
-                        :let [value (get item (if (map? column)
-                                                (:table column)
-                                                column))]]
-                    ^{:key column}
-                    [:td [display/disp :listing table column value]]))]]
+         start-offset items]
+      (.log js/console "rendering batch " start-offset)
+      (element style :listing-table-body
+               (doall
+                (mapcat
+                 (fn [i item]
+                   (let [drawer-open? (get drawer-open item)]
+                     (into [(with-meta
+                              (element style :listing-table-row
+                                       (+ start-offset i)
+                                       (cond
+                                         (nil? drawer) :no-drawer
+                                         drawer-open? :drawer-open
+                                         :else :drawer-closed)
+                                       (when drawer
+                                         #(do
+                                            (.preventDefault %)
+                                            (toggle-drawer! item)))
 
-               ;; If drawer component is specified and open for this row
-               (when (and drawer (get drawer-open item))
-                 [^{:key (str i "-drawer")}
-                  [:tr.postgrest-ui-listing-drawer
-                   [:td {:colSpan (count select)}
-                    [drawer item]]]]))))
-     (range) items))])
+                                       ;; cells
+                                       (for [column select
+                                             :let [value (get item (if (map? column)
+                                                                     (:table column)
+                                                                     column))]]
+                                         (with-meta
+                                           (element style :listing-table-cell
+                                                    [display/disp :listing table column value])
+                                           {:key column})))
+                              {:key i})]
+
+                           ;; If drawer component is specified and open for this row
+                           (when (and drawer (get drawer-open item))
+                             [(with-meta
+                                (element style :listing-table-drawer (count select) drawer item)
+                                {:key (str i "-drawer")})]))))
+                 (range) items))))}))
 
 (define-stateful-component listing [{:keys [endpoint table label batch-size loading-indicator
-                                            column-widths drawer]
+                                            column-widths drawer style]
                                      :or {batch-size 20
                                           label str
                                           loading-indicator [:div "Loading..."]}
@@ -79,6 +102,7 @@
                   drawer-open]
            :or {drawer-open #{}}} @state
 
+          style (or style :default)
           order-by (or order-by (:order-by opts)) ; use order-by in state or default from options
           load-batch! (fn [batch-number]
                         (swap! state merge {:loading? true})
@@ -95,38 +119,40 @@
                              ;; Load the first batch
                              (load-batch! 0))]
       [:<>
-       [:table.postgrest-ui-listing {:cellSpacing "0" :cellPadding "0"}
-        [listing-header (merge
-                         (select-keys opts [:table :select])
-                         {:on-click (fn [col current-order-by]
-                                      (swap! state merge {:batches nil ; reload everything
-                                                          :order-by [[col (if (= :asc current-order-by)
-                                                                            :desc
-                                                                            :asc)]]}))
-                          :column-widths column-widths})
-         order-by]
-        (if initial-loading?
-          ^{:key "initial-loading"}
-          [:tbody
-           [:tr
-            [:td {:colSpan (count (:select opts))}
-             loading-indicator]]]
-          (doall
-           (map-indexed
-            (fn [i batch]
-              ^{:key i}
-              [listing-batch (merge (select-keys opts [:table :select :label :drawer])
-                                    (when drawer
-                                      {:drawer drawer
-                                       :drawer-open drawer-open
-                                       :toggle-drawer! #(swap! state update :drawer-open
-                                                               (fn [set]
-                                                                 (let [set (or set #{})]
-                                                                   (if (set %)
-                                                                     (disj set %)
-                                                                     (conj set %)))))}))
-               (* i batch-size) batch])
-            batches)))]
+       (element style :listing-table
+                [listing-header (merge
+                                 {:style :default}
+                                 (select-keys opts [:table :select :style])
+                                 {:on-click (fn [col current-order-by]
+                                              (swap! state merge {:batches nil ; reload everything
+                                                                  :order-by [[col (if (= :asc current-order-by)
+                                                                                    :desc
+                                                                                    :asc)]]}))
+                                  :column-widths column-widths})
+                 order-by]
+                (if initial-loading?
+                  ^{:key "initial-loading"}
+                  [:tbody
+                   [:tr
+                    [:td {:colSpan (count (:select opts))}
+                     loading-indicator]]]
+                  (doall
+                   (map-indexed
+                    (fn [i batch]
+                      ^{:key i}
+                      [listing-batch (merge {:style :default}
+                                            (select-keys opts [:table :select :label :drawer :style])
+                                            (when drawer
+                                              {:drawer drawer
+                                               :drawer-open drawer-open
+                                               :toggle-drawer! #(swap! state update :drawer-open
+                                                                       (fn [set]
+                                                                         (let [set (or set #{})]
+                                                                           (if (set %)
+                                                                             (disj set %)
+                                                                             (conj set %)))))}))
+                       (* i batch-size) batch])
+                    batches))))
 
        ;; Check if there are still items not loaded
        (when (and (not loading?)
