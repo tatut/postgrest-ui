@@ -43,6 +43,25 @@
           background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAlUlEQVRYR+2XQQ7AIAgE8f+Pbi/thYosKN2Y6FmdcWJMbEIejcyXI7B1gUvdn9RhUotERMNfl/B+4QUDeEpiOwErvX5O4IPBEx8CVQCFh+5CpABVIAqHK6AFqAJZOFQBKUAVmIW7FbwCVIFV8GGFUQGqwGq4WcEqQBWogncr9ApQBarhnwq6AF3g94+S9xKWCx0BeoEb7kQWIfxoDacAAAAASUVORK5CYII=");
       }
 
+      @keyframes revealdown {
+          0% {
+              transform: scaleY(0);
+          }
+          100% {
+              transform: scaleY(1);
+          }
+      }
+
+      .postgrest-ui-listing-row-drawer-open + tr {
+          display: none;
+          transform-origin: top;
+      }
+      .postgrest-ui-listing-drawer {
+          display: table-row !important;
+          background-color: #e3e3e3;
+          animation: revealdown 0.5s ease;
+      }
+
     </style>
   </head>
   <body>
