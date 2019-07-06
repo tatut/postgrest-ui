@@ -1,6 +1,10 @@
 (ns postgrest-ui.impl.elements
   (:require [postgrest-ui.elements :refer [element]]))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Elements for listing-view
+
 (defmethod element [:default :listing-table-head] [_ _ & args]
   `[:thead ~@args])
 
@@ -40,6 +44,19 @@
   `[:table.postgrest-ui-listing {:cellSpacing "0" :cellPadding "0"}
     ~@args])
 
-(defmethod element [:default ] [_ _ & args] `[:foo ~args])
-(defmethod element [:default ] [_ _ & args] `[:foo ~args])
-(defmethod element [:default ] [_ _ & args] `[:foo ~args])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Elements for item-view
+
+(defmethod element [:default :item-view] [_ _ & args]
+  `[:div.postgrest-ui-item-view ~@args])
+
+(defmethod element [:default :item-view-field] [_ _ & args]
+  `[:div.postgrest-ui-item-view-item ~@args])
+(defmethod element [:default :item-view-label] [_ _ & args]
+  `[:div.postgrest-ui-item-view-label ~@args])
+(defmethod element [:default :item-view-value ] [_ _ & args]
+  `[:div.postgrest-ui-item-view-value ~@args])
+
+;(defmethod element [:default ] [_ _ & args] `[:foo ~args])
+;(defmethod element [:default ] [_ _ & args] `[:foo ~args])
