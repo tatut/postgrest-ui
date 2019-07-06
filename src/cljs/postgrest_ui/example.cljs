@@ -39,6 +39,7 @@
       :select ["film_id" "title" "description"
                {:table "actor"
                 :select ["first_name" "last_name"]}]
+      :column-widths ["5%" "20%" "45%" "30%"]
       :order-by [["film_id" :asc]]
       :label str
       :batch-size 20}]])

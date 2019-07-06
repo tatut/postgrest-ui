@@ -50,22 +50,25 @@
     ;; Regular value, just stringify
     (str value)))
 
-(defn- listing-header [{:keys [table select on-click]} order-by]
+(defn- listing-header [{:keys [table select on-click column-widths]} order-by]
   [:thead
    [:tr
     (doall
-     (for [column select
-           :let [order (some (fn [[col dir]]
-                               (when (= col column)
-                                 dir))
-                             order-by)]]
-       ^{:key column}
-       [:td.postgrest-ui-header-cell {:on-click #(on-click column order)}
-        (format-column-label table column)
-        [:div {:class (case order
-                        :asc "postgrest-ui-listing-header-order-asc"
-                        :desc "postgrest-ui-listing-header-order-desc"
-                        "postgrest-ui-listing-header-cell-order-none")}]]))]])
+     (map (fn [column width]
+            (let [order (some (fn [[col dir]]
+                                 (when (= col column)
+                                   dir))
+                              order-by)]
+              ^{:key column}
+              [:td.postgrest-ui-header-cell (merge {:on-click #(on-click column order)}
+                                                   (when width
+                                                     {:style {:width width}}))
+               (format-column-label table column)
+               [:div {:class (case order
+                               :asc "postgrest-ui-listing-header-order-asc"
+                               :desc "postgrest-ui-listing-header-order-desc"
+                               "postgrest-ui-listing-header-cell-order-none")}]]))
+          select (or column-widths (repeat nil))))]])
 
 (defn- listing-batch [{:keys [table select]} start-offset items]
   [:tbody
@@ -85,7 +88,8 @@
            [:td [format-value table column value]]))])
      items))])
 
-(define-stateful-component listing [{:keys [endpoint table label batch-size loading-indicator]
+(define-stateful-component listing [{:keys [endpoint table label batch-size loading-indicator
+                                            column-widths]
                                      :or {batch-size 20
                                           label str
                                           loading-indicator [:div "Loading..."]}
@@ -118,7 +122,8 @@
                                       (swap! state merge {:batches nil ; reload everything
                                                           :order-by [[col (if (= :asc current-order-by)
                                                                             :desc
-                                                                            :asc)]]}))})
+                                                                            :asc)]]}))
+                          :column-widths column-widths})
          order-by]
         (if initial-loading?
           ^{:key "initial-loading"}
