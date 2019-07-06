@@ -53,7 +53,6 @@
                               drawer-open
                               toggle-drawer!]}
          start-offset items]
-      (.log js/console "rendering batch " start-offset)
       (element style :listing-table-body
                (doall
                 (mapcat
