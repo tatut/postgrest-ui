@@ -1,0 +1,4 @@
+{:deps {reagent {:mvn/version "0.8.1"}
+        com.bhauman/figwheel-main {:mvn/version "0.2.0"}
+        com.bhauman/rebel-readline-cljs {:mvn/version "0.1.4"}}
+  :paths ["src/cljs" "target" "resources"]}
