@@ -70,26 +70,46 @@
                                "postgrest-ui-listing-header-cell-order-none")}]]))
           select (or column-widths (repeat nil))))]])
 
-(defn- listing-batch [{:keys [table select]} start-offset items]
+(defn- listing-batch [{:keys [table select
+                              drawer
+                              drawer-open
+                              toggle-drawer!]}
+                      start-offset items]
   [:tbody
    (doall
-    (map-indexed
+    (mapcat
      (fn [i item]
-       ^{:key i}
-       [:tr {:class (if (even? (+ start-offset i))
-                      "postgrest-ui-listing-row-even"
-                      "postgrest-ui-listing-row-odd")}
-        (doall
-         (for [column select
-               :let [value (get item (if (map? column)
-                                       (:table column)
-                                       column))]]
-           ^{:key column}
-           [:td [format-value table column value]]))])
-     items))])
+       (let [drawer-open? (get drawer-open item)]
+         (into [^{:key i}
+                [:tr {:class (str (if (even? (+ start-offset i))
+                                    "postgrest-ui-listing-row-even"
+                                    "postgrest-ui-listing-row-odd")
+                                  (when drawer
+                                    (if drawer-open?
+                                      " postgrest-ui-listing-row-drawer-open"
+                                      " postgrest-ui-listing-row-drawer-closed")))
+                      :on-click (when drawer
+                                  #(do
+                                     (.preventDefault %)
+                                     (toggle-drawer! item)))}
+                 (doall
+                  (for [column select
+                        :let [value (get item (if (map? column)
+                                                (:table column)
+                                                column))]]
+                    ^{:key column}
+                    [:td [format-value table column value]]))]]
+
+               ;; If drawer component is specified and open for this row
+               (when (and drawer (get drawer-open item))
+                 [^{:key (str i "-drawer")}
+                  [:tr.postgrest-ui-listing-drawer
+                   [:td {:colSpan (count select)}
+                    [drawer item]]]]))))
+     (range) items))])
 
 (define-stateful-component listing [{:keys [endpoint table label batch-size loading-indicator
-                                            column-widths]
+                                            column-widths drawer]
                                      :or {batch-size 20
                                           label str
                                           loading-indicator [:div "Loading..."]}
@@ -97,7 +117,9 @@
   {:state state}
   (if-let [defs @(registry/load-defs endpoint)]
     (let [ ;; Get current state
-          {:keys [batches all-items-loaded? loading? order-by]} @state
+          {:keys [batches all-items-loaded? loading? order-by
+                  drawer-open]
+           :or {drawer-open #{}}} @state
 
           order-by (or order-by (:order-by opts)) ; use order-by in state or default from options
           load-batch! (fn [batch-number]
@@ -135,7 +157,17 @@
            (map-indexed
             (fn [i batch]
               ^{:key i}
-              [listing-batch (select-keys opts [:table :select :label]) (* i batch-size) batch])
+              [listing-batch (merge (select-keys opts [:table :select :label :drawer])
+                                    (when drawer
+                                      {:drawer drawer
+                                       :drawer-open drawer-open
+                                       :toggle-drawer! #(swap! state update :drawer-open
+                                                               (fn [set]
+                                                                 (let [set (or set #{})]
+                                                                   (if (set %)
+                                                                     (disj set %)
+                                                                     (conj set %)))))}))
+               (* i batch-size) batch])
             batches)))]
 
        ;; Check if there are still items not loaded
