@@ -96,7 +96,7 @@
   (if-let [defs @(registry/load-defs endpoint)]
     (let [ ;; Get current state
           {:keys [batches all-items-loaded? loading? order-by
-                  drawer-open]
+                  drawer-open loading?]
            :or {drawer-open #{}}} @state
 
           order-by (or order-by (:order-by opts)) ; use order-by in state or default from options
@@ -125,26 +125,26 @@
                                                                                     :asc)]]}))
                                   :column-widths column-widths})
                  order-by]
-                (if initial-loading?
+                (doall
+                 (map-indexed
+                  (fn [i batch]
+                    ^{:key i}
+                    [listing-batch (merge (select-keys opts [:table :select :label :drawer :style])
+                                          (when drawer
+                                            {:drawer drawer
+                                             :drawer-open drawer-open
+                                             :toggle-drawer! #(swap! state update :drawer-open
+                                                                     (fn [set]
+                                                                       (let [set (or set #{})]
+                                                                         (if (set %)
+                                                                           (disj set %)
+                                                                           (conj set %)))))}))
+                     (* i batch-size) batch])
+                  batches))
+                (when loading?
                   (with-meta
                     (element style :listing-table-loading (count (:select opts)))
-                    {:key "initial-loading"})
-                  (doall
-                   (map-indexed
-                    (fn [i batch]
-                      ^{:key i}
-                      [listing-batch (merge (select-keys opts [:table :select :label :drawer :style])
-                                            (when drawer
-                                              {:drawer drawer
-                                               :drawer-open drawer-open
-                                               :toggle-drawer! #(swap! state update :drawer-open
-                                                                       (fn [set]
-                                                                         (let [set (or set #{})]
-                                                                           (if (set %)
-                                                                             (disj set %)
-                                                                             (conj set %)))))}))
-                       (* i batch-size) batch])
-                    batches))))
+                    {:key "loading"})))
 
        ;; Check if there are still items not loaded
        (when (and (not loading?)

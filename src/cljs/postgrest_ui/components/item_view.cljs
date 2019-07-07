@@ -6,8 +6,7 @@
             [postgrest-ui.elements :refer [element]])
   (:require-macros [postgrest-ui.impl.state :refer [define-stateful-component]]))
 
-(define-stateful-component item-view [{:keys [endpoint table select loading-indicator
-                                              style]} primary-key]
+(define-stateful-component item-view [{:keys [endpoint table select style]} primary-key]
   {:state state}
   (if-let [defs @(registry/load-defs endpoint)]
     (if-let [{:keys [loaded-item]} @state]
@@ -32,5 +31,5 @@
                               :select select} primary-key)
             (.then #(swap! state merge
                            {:loaded-item %})))
-        loading-indicator))
-    loading-indicator))
+        (element style :loading-indicator)))
+    (element style :loading-indicator)))
