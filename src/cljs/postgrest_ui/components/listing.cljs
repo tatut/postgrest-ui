@@ -87,11 +87,10 @@
                                 {:key (str i "-drawer")})]))))
                  (range) items))))}))
 
-(define-stateful-component listing [{:keys [endpoint table label batch-size loading-indicator
+(define-stateful-component listing [{:keys [endpoint table label batch-size
                                             column-widths drawer style]
                                      :or {batch-size 20
-                                          label str
-                                          loading-indicator [:div "Loading..."]}
+                                          label str}
                                      :as opts}]
   {:state state}
   (if-let [defs @(registry/load-defs endpoint)]
@@ -127,11 +126,9 @@
                                   :column-widths column-widths})
                  order-by]
                 (if initial-loading?
-                  ^{:key "initial-loading"}
-                  [:tbody
-                   [:tr
-                    [:td {:colSpan (count (:select opts))}
-                     loading-indicator]]]
+                  (with-meta
+                    (element style :listing-table-loading (count (:select opts)))
+                    {:key "initial-loading"})
                   (doall
                    (map-indexed
                     (fn [i batch]
@@ -155,4 +152,4 @@
                   (not all-items-loaded?))
          [scroll-sensor/scroll-sensor
           #(load-batch! (count batches))])])
-    loading-indicator))
+    (element style :loading-indicator)))

@@ -23,6 +23,19 @@
                       (assoc cs kw (r/adapt-react-class mui-class)))))))
        kw))
 
+;;; Generic elements
+
+(defmethod element [:material :loading-indicator] [_ _ & _]
+  [(mc :CircularProgress)])
+
+;;; Listing table elements
+
+(defmethod element [:material :listing-table-loading] [_ _ & [col-span]]
+  [(mc :TableBody)
+   [(mc :TableRow)
+    [(mc :TableCell) {:colSpan col-span :align "center"}
+     [(mc :CircularProgress)]]]])
+
 (defmethod element [:material :listing-table] [_ _ & args]
   (into [(mc :Table) {}]
         args))

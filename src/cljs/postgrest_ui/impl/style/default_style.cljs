@@ -2,9 +2,18 @@
   "Implements element rendering for the default style"
   (:require [postgrest-ui.elements :refer [element]]))
 
+;; Generic elements
+(defmethod element [:default :loading-indicator] [_ _ & _]
+  [:div.loading "Loading..."])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Elements for listing-view
+
+(defmethod element [:default :listing-table-loading] [_ _ & [col-span]]
+  [:tbody
+   [:tr
+    [:td {:colSpan col-span}
+     "Loading..."]]])
 
 (defmethod element [:default :listing-table-head] [_ _ & args]
   `[:thead ~@args])
