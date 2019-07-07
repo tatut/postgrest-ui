@@ -3,6 +3,9 @@
   (:require [postgrest-ui.components.listing :as listing]
             [postgrest-ui.components.item-view :as item-view]
             [postgrest-ui.display :as display]
+            [postgrest-ui.impl.style.default-style] ; require a rendering style implementation
+            [postgrest-ui.impl.style.material]
+            [postgrest-ui.elements :as elements]
             [reagent.core :as r]
             [clojure.string :as str]))
 
@@ -66,23 +69,23 @@
                {:table "actor"
                 :select ["first_name" "last_name"]}]
       :drawer (fn [item]
-                [item-view/item-view {:endpoint endpoint
-                                      :table "film"
-                                      :select ["title" "description"
-                                               {:table "actor"
-                                                :select ["first_name" "last_name"]}
-                                               {:table "category"
-                                                :select ["name"]}
-                                               {:table "language"
-                                                :select ["name"]}]}
+                [item-view/item-view
+                 {:endpoint endpoint
+                  :table "film"
+                  :select ["title" "description"
+                           {:table "actor"
+                            :select ["first_name" "last_name"]}
+                           {:table "category"
+                            :select ["name"]}
+                           {:table "language"
+                            :select ["name"]}]}
                  (get item "film_id")])
       :column-widths ["5%" "20%" "45%" "30%"]
       :order-by [["film_id" :asc]]
       :label str
       :batch-size 20}]])
 
-(defn main []
+(defn ^:export main []
+  (elements/set-default-style! :material)
   (r/render [listing-view]
             (.getElementById js/document "app")))
-
-(main)

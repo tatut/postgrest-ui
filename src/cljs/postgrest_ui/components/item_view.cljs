@@ -3,7 +3,6 @@
   (:require [postgrest-ui.impl.fetch :as fetch]
             [postgrest-ui.impl.registry :as registry]
             [postgrest-ui.display :as display]
-            [postgrest-ui.impl.elements]
             [postgrest-ui.elements :refer [element]])
   (:require-macros [postgrest-ui.impl.state :refer [define-stateful-component]]))
 

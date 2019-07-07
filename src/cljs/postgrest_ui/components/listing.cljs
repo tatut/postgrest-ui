@@ -6,7 +6,6 @@
             [postgrest-ui.impl.fetch :as fetch]
             [postgrest-ui.display :as display]
             [postgrest-ui.elements :refer [element]]
-            [postgrest-ui.impl.elements]
             [clojure.string :as str])
   (:require-macros [postgrest-ui.impl.state :refer [define-stateful-component]]))
 
@@ -101,7 +100,6 @@
                   drawer-open]
            :or {drawer-open #{}}} @state
 
-          style (or style :default)
           order-by (or order-by (:order-by opts)) ; use order-by in state or default from options
           load-batch! (fn [batch-number]
                         (swap! state merge {:loading? true})
@@ -120,7 +118,6 @@
       [:<>
        (element style :listing-table
                 [listing-header (merge
-                                 {:style :default}
                                  (select-keys opts [:table :select :style])
                                  {:on-click (fn [col current-order-by]
                                               (swap! state merge {:batches nil ; reload everything
@@ -139,8 +136,7 @@
                    (map-indexed
                     (fn [i batch]
                       ^{:key i}
-                      [listing-batch (merge {:style :default}
-                                            (select-keys opts [:table :select :label :drawer :style])
+                      [listing-batch (merge (select-keys opts [:table :select :label :drawer :style])
                                             (when drawer
                                               {:drawer drawer
                                                :drawer-open drawer-open

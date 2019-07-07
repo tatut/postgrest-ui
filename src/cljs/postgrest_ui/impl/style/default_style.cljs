@@ -1,4 +1,5 @@
-(ns postgrest-ui.impl.elements
+(ns postgrest-ui.impl.style.default-style
+  "Implements element rendering for the default style"
   (:require [postgrest-ui.elements :refer [element]]))
 
 
