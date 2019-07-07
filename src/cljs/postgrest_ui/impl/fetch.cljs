@@ -31,6 +31,11 @@
       (.then #(.json %))
       (.then #(js->clj %))))
 
+(defn- format-order-by [[order dir]]
+  (str order (case dir
+               :asc ".asc"
+               :desc ".desc")))
+
 (defn load-range
   "Load a range of items. Returns promise."
   [endpoint defs {:keys [table select order-by filter]} offset limit]
@@ -43,11 +48,7 @@
                              (str "select=" (format-select select)))
                            (when (seq order-by)
                              (str "order="
-                                  (str/join "," (map (fn [[order dir]]
-                                                       (str order (case dir
-                                                                    :asc ".asc"
-                                                                    :desc ".desc")))
-                                                     order-by))))])))]
+                                  (str/join "," (map format-order-by order-by))))])))]
     (-> (@fetch-impl url
          #js {:method "GET"
               :headers (doto (js/Headers.)
