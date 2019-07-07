@@ -1,4 +1,6 @@
-{:deps {reagent {:mvn/version "0.8.1"}
+{:deps {cljsjs/react {:mvn/version "16.8.6-0"}
+        cljsjs/react-dom {:mvn/version "16.8.6-0"}
+        reagent {:mvn/version "0.8.1"}
         com.bhauman/figwheel-main {:mvn/version "0.2.0"}
         com.bhauman/rebel-readline-cljs {:mvn/version "0.1.4"}}
   :paths ["src/cljs" "target" "resources"]}
