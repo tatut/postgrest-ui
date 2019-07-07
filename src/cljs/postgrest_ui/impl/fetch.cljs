@@ -8,9 +8,7 @@
 (defn load-swagger-json [endpoint callback]
   (-> (@fetch-impl endpoint)
       (.then #(.json %))
-      (.then #(let [clj (js->clj %)]
-                (.log js/console "CLJ: " clj)
-                clj))
+      (.then #(js->clj %))
       (.then callback)))
 
 (defn- format-select [select]
@@ -36,6 +34,71 @@
                :asc ".asc"
                :desc ".desc")))
 
+(def combined-filter #{:and :or})
+
+(declare format-operator)
+
+;; http://postgrest.org/en/v5.2/api.html#horizontal-filtering-rows
+(def filter-operators
+  {;; Equality and comparison
+   := #(str "eq." %)
+   :> #(str "gt." %)
+   :>= #(str "gte." %)
+   :< #(str "lt." %)
+   :<= #(str "lte." %)
+   :not= #(str "neq." %)
+
+   ;; Text search with LIKE
+   :like #(str "like." (str/replace % "%" "*")) ; use * instead of %
+   :ilike #(str "ilike." (str/replace % "%" "*"))
+
+   :in #(str "in.(" (str/join "," (map prn %)) ")")
+
+   ;; Exact equality
+   :null? (constantly "is.null")
+   :not-null? (constantly "not.is.null")
+   :true? (constantly "is.true")
+   :false? (constantly "is.false")
+
+   ;; Full text search
+   :fts #(str "fts." %)
+   :plfts #(str "plfts." %)
+   :phfts #(str "phfts." %)
+
+   ;; Array element checks
+   :contains? #(str "cs.{" (str/join "," (map prn %)) "}")
+   :contained-in? #(str "cd.{" (str/join "," (map prn %)) "}")
+
+   ;; Range checks
+   :overlaps? #(str "ov.[" %1 "," %2 "]")
+   :left-of? #(str "sl.(" %1 "," %2 ")")
+   :right-of? #(str "sr.(" %1 "," %2 ")")
+   :not-extends-left-of? #(str "nxl.(" %1 "," %2 ")")
+   :not-extends-right-of? #(str "nxr.(" %1 "," %2 ")")
+   :adjacent? #(str "adj.(" %1 "," %2 ")")
+
+   :not #(str "not." (apply format-operator %&))})
+
+(defn- format-filter
+  ([filters]
+   (format-filter filters "=" "&"))
+  ([filters value-separator filter-separator]
+   (str/join filter-separator
+             (map (fn [[column value]]
+                    (if (combined-filter column)
+                      ;; Format multiple clauses as AND/OR
+                      (str (name column) "=(" (format-filter value "." ",") ")")
+
+                      ;; Single column filter
+                      (let [[op-kw & op-args] value
+                            op-fn (filter-operators op-kw)]
+                        (when-not op-fn
+                          (throw (ex-info "Unknown filter operator"
+                                          {:operator value})))
+                        (str column value-separator
+                             (apply op-fn op-args)))))
+                  filters))))
+
 (defn load-range
   "Load a range of items. Returns promise."
   [endpoint defs {:keys [table select order-by filter]} offset limit]
@@ -46,6 +109,8 @@
                           [(when select
                              ;; process resource embed
                              (str "select=" (format-select select)))
+                           (when filter
+                             (format-filter filter))
                            (when (seq order-by)
                              (str "order="
                                   (str/join "," (map format-order-by order-by))))])))]

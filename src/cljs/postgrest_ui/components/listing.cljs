@@ -103,7 +103,7 @@
           load-batch! (fn [batch-number]
                         (swap! state merge {:loading? true})
                         (-> (fetch/load-range endpoint defs
-                                              (merge (select-keys opts [:table :select])
+                                              (merge (select-keys opts [:table :select :filter])
                                                      {:order-by order-by})
                                               (* batch-number batch-size)
                                               batch-size)
