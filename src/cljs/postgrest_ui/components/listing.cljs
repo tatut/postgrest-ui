@@ -92,16 +92,23 @@
                                      :or {batch-size 20
                                           label str}
                                      :as opts}]
-  {:state state}
+  {:state state
+   :component-will-receive-props
+   (when (not= (:filter opts)
+               (:current-filter @state))
+     ;; Filters have changed, remove all fetched batches
+     (swap! state assoc :batches nil))}
   (if-let [defs @(registry/load-defs endpoint)]
     (let [ ;; Get current state
           {:keys [batches all-items-loaded? loading? order-by
                   drawer-open loading?]
            :or {drawer-open #{}}} @state
 
+          ;_ (.log js/console "FILTER: " (:filter opts))
           order-by (or order-by (:order-by opts)) ; use order-by in state or default from options
           load-batch! (fn [batch-number]
-                        (swap! state merge {:loading? true})
+                        (swap! state merge {:loading? true
+                                            :current-filter (:filter opts)})
                         (-> (fetch/load-range endpoint defs
                                               (merge (select-keys opts [:table :select :filter])
                                                      {:order-by order-by})
@@ -153,3 +160,29 @@
          [scroll-sensor/scroll-sensor
           #(load-batch! (count batches))])])
     (element style :loading-indicator)))
+
+(define-stateful-component filtered-listing [{:keys [filters-view
+                                                     search-timeout]
+                                              :or {search-timeout 500}
+                                              :as opts}]
+  {:state state}
+  (let [{filter-state :filter
+         next-filter :next-filter
+         listing-state :listing
+         timeout :timeout} @state]
+    [:<>
+     [filters-view {:state next-filter
+                    :set-state! (fn [next-filter]
+                                  (when timeout
+                                    (.clearTimeout js/window timeout))
+                                  (swap! state assoc
+                                         :next-filter next-filter
+                                         :timeout (.setTimeout js/window
+                                                               #(swap! state
+                                                                       (fn [state]
+                                                                         (assoc state :filter (:next-filter state))))
+                                                               search-timeout)))}]
+     [listing (assoc opts
+                     :state listing-state
+                     :set-state! #(swap! state assoc :listing %)
+                     :filter filter-state)]]))

@@ -6,6 +6,7 @@
             [postgrest-ui.impl.style.default-style] ; require a rendering style implementation
             [postgrest-ui.impl.style.material]
             [postgrest-ui.elements :as elements]
+            [postgrest-ui.components.filters :as filters]
             [reagent.core :as r]
             [clojure.string :as str]))
 
@@ -57,14 +58,17 @@
       ^{:key (str first_name last_name)}
       [:li last_name ", " first_name]))])
 
-
+(defn filters [opts]
+  [:div (pr-str opts)])
 (def endpoint "http://localhost:3000")
 (defn listing-view []
   [:div
    [:h3 "Movie listing"]
-    [listing/listing
+    [listing/filtered-listing
      {:endpoint endpoint
       :table "film"
+      :filters-view (r/partial filters/simple-search-form ["title" "description"])
+      ;:filter {"description" [:ilike "%scientist%"]}
       :select ["film_id" "title" "description"
                {:table "actor"
                 :select ["first_name" "last_name"]}]
