@@ -47,10 +47,10 @@
         (not= (set (keep old-drawer-open old-items))
               (set (keep new-drawer-open new-items))))))
     :reagent-render
-    (fn [{:keys [table select style
-                              drawer
-                              drawer-open
-                              toggle-drawer!]}
+    (fn [{:keys [table select style format
+                 drawer
+                 drawer-open
+                 toggle-drawer!]}
          start-offset items]
       (element style :listing-table-body
                (doall
@@ -73,10 +73,16 @@
                                        (for [column select
                                              :let [value (get item (if (map? column)
                                                                      (:table column)
-                                                                     column))]]
+                                                                     column))
+                                                   fmt (get format column)]]
                                          (with-meta
                                            (element style :listing-table-cell
-                                                    [display/disp :listing table column value])
+                                                    (if fmt
+                                                      ;; If formatter is given, use that directly
+                                                      (fmt item)
+
+                                                      ;; Otherwise call multimethod to render value
+                                                      [display/disp :listing table column value]))
                                            {:key column})))
                               {:key i})]
 
@@ -136,7 +142,7 @@
                  (map-indexed
                   (fn [i batch]
                     ^{:key i}
-                    [listing-batch (merge (select-keys opts [:table :select :label :drawer :style])
+                    [listing-batch (merge (select-keys opts [:table :select :label :drawer :style :format])
                                           (when drawer
                                             {:drawer drawer
                                              :drawer-open drawer-open
