@@ -7,7 +7,7 @@
   (:require-macros [postgrest-ui.impl.state :refer [define-stateful-component]]))
 
 
-(define-stateful-component item-view [{:keys [endpoint table select style view]} primary-key]
+(define-stateful-component item-view [{:keys [endpoint token table select style view]} primary-key]
   {:state state}
   (if-let [defs @(registry/load-defs endpoint)]
     (if-let [{:keys [loaded-item]} @state]
@@ -32,7 +32,7 @@
 
       ;; Load item
       (do
-        (-> (fetch/get-by-id endpoint defs
+        (-> (fetch/get-by-id endpoint token defs
                              {:table table
                               :select select} primary-key)
             (.then #(swap! state merge

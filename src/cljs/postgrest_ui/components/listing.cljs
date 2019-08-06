@@ -93,7 +93,7 @@
                                 {:key (str i "-drawer")})]))))
                  (range) items))))}))
 
-(define-stateful-component listing [{:keys [endpoint table label batch-size
+(define-stateful-component listing [{:keys [endpoint token table label batch-size
                                             column-widths drawer style]
                                      :or {batch-size 20
                                           label str}
@@ -115,7 +115,7 @@
           load-batch! (fn [batch-number]
                         (swap! state merge {:loading? true
                                             :current-filter (:filter opts)})
-                        (-> (fetch/load-range endpoint defs
+                        (-> (fetch/load-range endpoint token defs
                                               (merge (select-keys opts [:table :select :filter])
                                                      {:order-by order-by})
                                               (* batch-number batch-size)

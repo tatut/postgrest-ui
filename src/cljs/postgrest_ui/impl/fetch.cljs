@@ -79,6 +79,11 @@
 
    :not #(str "not." (apply format-operator %&))})
 
+(defn- authorization-header [token]
+  (if token
+    {"Authorization" (str "Bearer " token)}
+    {}))
+
 (defn- format-filter
   ([filters]
    (format-filter filters "=" "&"))
@@ -101,7 +106,7 @@
 
 (defn load-range
   "Load a range of items. Returns promise."
-  [endpoint defs {:keys [table select order-by filter]} offset limit]
+  [endpoint token defs {:keys [table select order-by filter]} offset limit]
   (let [url (str (table-endpoint-url endpoint defs table) "?"
                  (str/join
                   "&"
@@ -116,18 +121,21 @@
                                   (str/join "," (map format-order-by order-by))))])))]
     (-> (@fetch-impl url
          #js {:method "GET"
-              :headers (doto (js/Headers.)
-                         (.append "Range" (str offset "-" (dec (+ offset limit))))
-                         (.append "Range-Unit" "items"))})
+              :headers (clj->js
+                        (merge
+                         {"Range" (str offset "-" (dec (+ offset limit)))
+                          "Range-Unit" "items"}
+                         (authorization-token token)))})
         json->clj)))
 
-(defn get-by-id [endpoint defs {:keys [table select]} id]
+(defn get-by-id [endpoint token defs {:keys [table select]} id]
   (let [pk (swagger/primary-key-of defs table)
         _ (assert pk (str "Couldn't find primary key column for table: " table))
         url (str (table-endpoint-url endpoint defs table)
                  "?select= " (format-select select)
                  "&" pk "=eq." id)]
     (-> (@fetch-impl url
-         #js {:method "GET"})
+         #js {:method "GET"
+              :headers (clj->js (authorization-header token))})
         json->clj
         (.then first))))
