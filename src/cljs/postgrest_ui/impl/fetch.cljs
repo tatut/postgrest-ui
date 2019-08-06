@@ -125,7 +125,7 @@
                         (merge
                          {"Range" (str offset "-" (dec (+ offset limit)))
                           "Range-Unit" "items"}
-                         (authorization-token token)))})
+                         (authorization-header token)))})
         json->clj)))
 
 (defn get-by-id [endpoint token defs {:keys [table select]} id]
