@@ -84,15 +84,15 @@
     {"Authorization" (str "Bearer " token)}
     {}))
 
-(defn- format-filter
+(defn- format-where
   ([filters]
-   (format-filter filters "=" "&"))
+   (format-where filters "=" "&"))
   ([filters value-separator filter-separator]
    (str/join filter-separator
              (map (fn [[column value]]
                     (if (combined-filter column)
                       ;; Format multiple clauses as AND/OR
-                      (str (name column) "=(" (format-filter value "." ",") ")")
+                      (str (name column) "=(" (format-where value "." ",") ")")
 
                       ;; Single column filter
                       (let [[op-kw & op-args] value
@@ -106,7 +106,7 @@
 
 (defn load-range
   "Load a range of items. Returns promise."
-  [endpoint token defs {:keys [table select order-by filter]} offset limit]
+  [endpoint token defs {:keys [table select order-by where]} offset limit]
   (let [url (str (table-endpoint-url endpoint defs table) "?"
                  (str/join
                   "&"
@@ -114,8 +114,8 @@
                           [(when select
                              ;; process resource embed
                              (str "select=" (format-select select)))
-                           (when filter
-                             (format-filter filter))
+                           (when where
+                             (format-where where))
                            (when (seq order-by)
                              (str "order="
                                   (str/join "," (map format-order-by order-by))))])))]

@@ -100,8 +100,8 @@
                                      :as opts}]
   {:state state
    :component-will-receive-props
-   (when (not= (:filter opts)
-               (:current-filter @state))
+   (when (not= (:where opts)
+               (:current-where @state))
      ;; Filters have changed, remove all fetched batches
      (swap! state assoc :batches nil))}
   (if-let [defs @(registry/load-defs endpoint)]
@@ -110,23 +110,22 @@
                   drawer-open loading?]
            :or {drawer-open #{}}} @state
 
-          ;_ (.log js/console "FILTER: " (:filter opts))
           order-by (or order-by (:order-by opts)) ; use order-by in state or default from options
           load-batch! (fn [batch-number]
                         (swap! state merge {:loading? true
-                                            :current-filter (:filter opts)})
+                                            :current-where (:where opts)})
                         (-> (fetch/load-range endpoint token defs
-                                              (merge (select-keys opts [:table :select :filter])
+                                              (merge (select-keys opts [:table :select :where])
                                                      {:order-by order-by})
                                               (* batch-number batch-size)
                                               batch-size)
                             (.then #(swap! state merge
                                            {:batches (conj (or batches []) %)
                                             :loading? false
-                                            :all-items-loaded? (< (count %) batch-size)}))))
-          initial-loading? (when (empty? batches)
-                             ;; Load the first batch
-                             (load-batch! 0))]
+                                            :all-items-loaded? (< (count %) batch-size)}))))≈]
+      (when (empty? batches)
+        ;; Load the first batch
+        (load-batch! 0))
       [:<>
        (element style :listing-table
                 [listing-header (merge
@@ -172,23 +171,23 @@
                                               :or {search-timeout 500}
                                               :as opts}]
   {:state state}
-  (let [{filter-state :filter
-         next-filter :next-filter
+  (let [{where-state :where
+         next-where :next-where
          listing-state :listing
          timeout :timeout} @state]
     [:<>
-     [filters-view {:state next-filter
-                    :set-state! (fn [next-filter]
+     [filters-view {:state next-where
+                    :set-state! (fn [next-where]
                                   (when timeout
                                     (.clearTimeout js/window timeout))
                                   (swap! state assoc
-                                         :next-filter next-filter
+                                         :next-where next-where
                                          :timeout (.setTimeout js/window
                                                                #(swap! state
                                                                        (fn [state]
-                                                                         (assoc state :filter (:next-filter state))))
+                                                                         (assoc state :where (:next-where state))))
                                                                search-timeout)))}]
      [listing (assoc opts
                      :state listing-state
                      :set-state! #(swap! state assoc :listing %)
-                     :filter filter-state)]]))
+                     :where where-state)]]))
