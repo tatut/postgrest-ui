@@ -123,8 +123,9 @@
          #js {:method "GET"
               :headers (clj->js
                         (merge
-                         {"Range" (str offset "-" (dec (+ offset limit)))
-                          "Range-Unit" "items"}
+                         (when offset
+                           {"Range" (str offset "-" (dec (+ offset limit)))
+                            "Range-Unit" "items"})
                          (authorization-header token)))})
         json->clj)))
 
