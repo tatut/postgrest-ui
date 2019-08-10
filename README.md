@@ -18,6 +18,20 @@ frontend framework. The components can keep their own state, or use customer pro
 2. Run [PostgREST](http://postgrest.org)
 3. Start figwheel: `clj -m figwheel.main -b dev -r`
 
+## Rendering styles
+
+The rendering is done indirectly via multimethods. Style can be set as default or passing
+the `:style` option to components.
+
+postgrest-ui comes with 2 rendering styles:
+* `:default`
+* `:material`
+
+The `:default` mode outputs regular HTML elements and is customized in CSS (see `resources/public/postgrest-ui.css`).
+
+The `:material` mode outputs Material UI components and requires the page include the library.
+
+
 
 ## Components
 
@@ -27,6 +41,52 @@ Listing component can be used to generate basic listings views.
 They support selecting a row and adding a drawer component.
 
 Listing automatically includes batching and will load more items when scrolling down.
+
+Below shows an example of listing with simple filters view and drawer with an item view.
+
+ <table>
+   <tr>
+     <td>
+       Listing using default rendering style:
+       <img src="https://raw.githubusercontent.com/tatut/postgrest-ui/master/videos/listing-default-style.gif"/>
+     </td>
+     <td>
+       Listing using Material UI rendering style:
+       <img src="https://raw.githubusercontent.com/tatut/postgrest-ui/master/videos/listing-material-style.gif"/>
+     </td>
+   </tr>
+ </table>
+
+Example code:
+```clojure
+;; see example.cljs for full example code
+(defn listing-view []
+  [:div
+   [:h3 "Movie listing"]
+    [listing/filtered-listing
+     {:endpoint endpoint
+      :table "film"
+      :filters-view (r/partial filters/simple-search-form ["title" "description"])
+      :select ["film_id" "title" "description"
+               {:table "actor"
+                :select ["first_name" "last_name"]}]
+      :drawer (fn [item]
+                [item-view/item-view
+                 {:endpoint endpoint
+                  :table "film"
+                  :select ["title" "description"
+                           {:table "actor"
+                            :select ["first_name" "last_name"]}
+                           {:table "category"
+                            :select ["name"]}
+                           {:table "language"
+                            :select ["name"]}]}
+                 (get item "film_id")])
+      :column-widths ["5%" "20%" "45%" "30%"]
+      :order-by [["film_id" :asc]]
+      :label str
+      :batch-size 20}]])
+```
 
 ### Form
 
