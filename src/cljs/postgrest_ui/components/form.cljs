@@ -1,17 +1,18 @@
 (ns postgrest-ui.components.form
   (:require [postgrest-ui.impl.registry :as registry]
             [postgrest-ui.elements :refer [element]]
-            [postgrest-ui.impl.swagger :as swagger]
-            [postgrest-ui.display :as display])
+            [postgrest-ui.impl.schema :as schema]
+            [postgrest-ui.display :as display]
+            [reagent.core :as r])
   (:require-macros [postgrest-ui.impl.state :refer [define-stateful-component]]))
 
 
-(defn- column-input [style defs table column]
-  (let [{:strs [type format]} (swagger/column-info defs table column)]
+(defn- column-input [style defs table column value-atom]
+  (let [{:strs [type format]} (schema/column-info defs table column)]
     (element style :text-input {:label (display/label table column)
                                 :type type
                                 :format format
-                                :value "FIXME:current value"})))
+                                :value-atom value-atom})))
 
 (defn- foreign-key-link [style defs table {:keys [link-to]}]
   [:div "LINK-TO" link-to])
@@ -39,7 +40,9 @@
                           (foreign-key-link style defs table column)
 
                           :else
-                          (column-input style defs table column))))
+                          (column-input style defs table column
+                                        (r/wrap (get-in current-state [:data column])
+                                                #(swap! state assoc-in [:data column] %))))))
              {:key i}))
          layout))
        [:div "this is the form"]
