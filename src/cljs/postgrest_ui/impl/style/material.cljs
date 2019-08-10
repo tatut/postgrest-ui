@@ -2,7 +2,8 @@
   "Render using Material UI components"
   (:require [reagent.core :as r]
             [goog.object :as gobj]
-            [postgrest-ui.elements :refer [element]]))
+            [postgrest-ui.elements :refer [element]]
+            [clojure.string :as str]))
 
 (defonce MaterialUI (delay
                       (let [mui (gobj/get js/window "MaterialUI" nil)]
@@ -105,7 +106,37 @@
 ;; Elements for input fields
 
 (defmethod element [:material :text-input] [_ _ & [{:keys [label type format value value-atom]}]]
-  [(mc :TextField)
-   {:label label
-    :value (or @value-atom "")
-    :on-change #(reset! value-atom (-> % .-target .-value))}])
+  (let [[read write field-type]
+        (case type
+          "integer" [js/parseInt str "number"]
+          [identity identity "text"])]
+    [(mc :TextField)
+     {:label label
+      :value (or (some-> @value-atom read) "")
+      :type field-type
+      :on-change #(reset! value-atom
+                          (let [v (-> % .-target .-value)]
+                            (when-not (str/blank? v)
+                              (read v))))}]))
+
+(defmethod element [:material :select-input] [_ _ & [{:keys [label name options value-atom
+                                                             option-label option-value]
+                                                      :or {option-label identity
+                                                           option-value identity}}]]
+  (let [min-width (max 100 (* (count label) 10))] ; simple min width heuristic
+    [(mc :FormControl) {:style {:min-width min-width}}
+     [(mc :InputLabel) {:htmlFor name} label]
+     [(mc :Select) {:value (or @value-atom "")
+                    :on-change #(reset! value-atom
+                                        (let [v (-> % .-target .-value)]
+                                          (when-not (str/blank? v) v)))
+                    :input (r/as-element
+                            [(mc :Input) {:name name}])}
+
+      ;; Empty selection
+      [(mc :MenuItem) {:value ""} ""]
+
+      (for [option options]
+        ^{:key option}
+        [(mc :MenuItem) {:value (option-value option)}
+         (option-label option)])]]))

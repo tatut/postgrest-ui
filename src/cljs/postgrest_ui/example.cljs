@@ -105,9 +105,10 @@
   [form/form
    {:endpoint endpoint
     :table "film"
-    :layout [{:group :general :label "General" :columns ["title" "description"]}
-             {:group :info :label "Categories and languages" :columns [{:link-to "category"}
-                                                                       {:link-to "language"}]}
+    :layout [{:group :general :label "General" :columns ["title" "description" "rating" "length"]}
+             {:group :info :label "Categories and languages" :columns [{:link-to "category" :display "name"}
+                                                                       {:column "language_id"
+                                                                        :option-label "name"}]}
              {:group :people :label "Actors" :columns [{:link-to "actor"}]}]
     :header-fn form-header
     :footer-fn form-footer}])

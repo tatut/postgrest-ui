@@ -16,7 +16,19 @@
                   (when (primary-key? definition) column))
                 props))))
 
+(def ^:const description-fk-pattern #"<fk table='([^']+)' column='([^']+)'/>")
+
+(defn- foreign-key-info [description]
+  (let [[_ table column :as match] (re-find description-fk-pattern description)]
+    (when match
+      {"foreign-key" {"table" table
+                      "column" column}})))
+
 (defn column-info [defs table column]
-  (merge
-   (get-in defs ["definitions" table "properties" column])
-   {"required?" (some #(= column %) (get-in defs ["definitions" table "required"]))}))
+  (let [info (get-in defs ["definitions" table "properties" column])]
+    (when info
+      (merge
+       {"name" column
+        "required?" (some #(= column %) (get-in defs ["definitions" table "required"]))}
+       info
+       (some-> info (get "description") foreign-key-info)))))
