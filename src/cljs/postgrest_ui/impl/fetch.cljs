@@ -1,7 +1,7 @@
 (ns postgrest-ui.impl.fetch
   "Fetch API helpers"
   (:require [clojure.string :as str]
-            [postgrest-ui.impl.swagger :as swagger]))
+            [postgrest-ui.impl.schema :as schema]))
 
 (defonce fetch-impl (atom js/fetch))
 
@@ -130,7 +130,7 @@
         json->clj)))
 
 (defn get-by-id [endpoint token defs {:keys [table select]} id]
-  (let [pk (swagger/primary-key-of defs table)
+  (let [pk (schema/primary-key-of defs table)
         _ (assert pk (str "Couldn't find primary key column for table: " table))
         url (str (table-endpoint-url endpoint defs table)
                  "?select= " (format-select select)

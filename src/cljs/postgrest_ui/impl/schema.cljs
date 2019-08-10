@@ -1,4 +1,4 @@
-(ns postgrest-ui.impl.swagger
+(ns postgrest-ui.impl.schema
   "Query the PostgREST swagger.json definitions"
   (:require [clojure.string :as str]))
 
