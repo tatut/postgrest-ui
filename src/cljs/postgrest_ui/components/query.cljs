@@ -6,7 +6,7 @@
   (:require-macros [postgrest-ui.impl.state :refer [define-stateful-component]]))
 
 
-(define-stateful-component query [{:keys [endpoint token table select order-by where style]} view-fn]
+(define-stateful-component query [{:keys [endpoint token table select order-by where style] :as opts} view-fn]
   {:state state
    :component-will-receive-props
    (reset! state {})}
