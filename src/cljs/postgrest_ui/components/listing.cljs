@@ -105,7 +105,7 @@
      ;; Filters have changed, remove all fetched batches
      (swap! state assoc :batches nil))}
   (if-let [defs @(registry/load-defs endpoint)]
-    (let [ ;; Get current state
+    (let [;; Get current state
           {:keys [batches all-items-loaded? loading? order-by
                   drawer-open loading?]
            :or {drawer-open #{}}} @state
@@ -122,7 +122,7 @@
                             (.then #(swap! state merge
                                            {:batches (conj (or batches []) %)
                                             :loading? false
-                                            :all-items-loaded? (< (count %) batch-size)}))))≈]
+                                            :all-items-loaded? (< (count %) batch-size)}))))]
       (when (empty? batches)
         ;; Load the first batch
         (load-batch! 0))
