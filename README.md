@@ -47,3 +47,25 @@ It can also do selection based on foreign key links.
      </td>
    </tr>
  </table>
+
+Example code:
+```clojure
+(defn form-header [form-data]
+  [:<>
+   [:div "FORM HEADER " (pr-str form-data)]
+   [:br]])
+
+(defmethod display/label ["film" "language_id"] [_ _] "Language")
+
+(defn form-view []
+  [form/form
+   {:endpoint endpoint
+    :table "film"
+    :layout [{:group :general :label "General" :columns ["title" "description" "rating" "length"]}
+             {:group :info :label "Language"
+              :columns [;; Foreign key reference, show selection from the rows with
+                        ;; :option-label column as the label
+                        {:column "language_id"
+                         :option-label "name"}]}]
+    :header-fn form-header}])
+```
