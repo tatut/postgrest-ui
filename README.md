@@ -39,15 +39,11 @@ It can also do selection based on foreign key links.
    <tr>
      <td>
        Form using default rendering style:
-       <video autoplay="true" loop="true">
-        <source src="https://raw.githubusercontent.com/tatut/postgrest-ui/master/videos/form-default-style.mp4" type="video/mp4">
-       </video>
+       <img src="https://raw.githubusercontent.com/tatut/postgrest-ui/master/videos/form-default-style.gif"/>
      </td>
      <td>
        Form using Material UI rendering style:
-       <video autoplay="true" loop="true">
-        <source src="https://raw.githubusercontent.com/tatut/postgrest-ui/master/videos/form-material-style.mp4" type="video/mp4">
-       </video>
+       <img src="https://raw.githubusercontent.com/tatut/postgrest-ui/master/videos/form-material-style.gif"/>
      </td>
    </tr>
  </table>
