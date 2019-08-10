@@ -94,14 +94,18 @@
   [(mc :Card)
    [(mc :CardHeader) {:title label}]
    [(mc :CardContent)
-    (into [:<>]
+    (into [(mc :Grid) {:container true
+                       :direction "column"}]
           (map-indexed
            (fn [i field]
-             (with-meta field {:key i})) fields))]])
+             ^{:key i}
+             [(mc :Grid) {:item true :xs 12}
+              field]) fields))]])
 
 ;; Elements for input fields
 
-(defmethod element [:material :text-input] [_ _ & [{:keys [label type format value]}]]
+(defmethod element [:material :text-input] [_ _ & [{:keys [label type format value value-atom]}]]
   [(mc :TextField)
    {:label label
-    :value value}])
+    :value (or @value-atom "")
+    :on-change #(reset! value-atom (-> % .-target .-value))}])
