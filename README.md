@@ -17,3 +17,37 @@ frontend framework. The components can keep their own state, or use customer pro
 1. Create [dvdrental sample database](http://www.postgresqltutorial.com/postgresql-sample-database/)
 2. Run [PostgREST](http://postgrest.org)
 3. Start figwheel: `clj -m figwheel.main -b dev -r`
+
+
+## Components
+
+### Listing
+
+Listing component can be used to generate basic listings views.
+They support selecting a row and adding a drawer component.
+
+Listing automatically includes batching and will load more items when scrolling down.
+
+### Form
+
+Form component will create an editable input form for a table.
+The form uses schema information to create suitable inputs based on the column types.
+
+It can also do selection based on foreign key links.
+
+ <table>
+   <tr>
+     <td>
+       Form using default rendering style:
+       <video autoplay="true" loop="true">
+        <source src="https://raw.githubusercontent.com/tatut/postgrest-ui/master/videos/form-default-style.mp4" type="video/mp4">
+       </video>
+     </td>
+     <td>
+       Form using Material UI rendering style:
+       <video autoplay="true" loop="true">
+        <source src="https://raw.githubusercontent.com/tatut/postgrest-ui/master/videos/form-material-style.mp4" type="video/mp4">
+       </video>
+     </td>
+   </tr>
+ </table>

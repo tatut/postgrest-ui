@@ -49,13 +49,14 @@
                                      column)
                        info (when column-name
                               (schema/column-info defs table column-name))
-                       label (display/label table column)
+                       label (display/label table column-name)
                        value-atom (r/wrap (get-in @state [:data column-name])
                                           #(swap! state assoc-in [:data column-name] %))]]
 
              (cond
                (contains? info "foreign-key")
-               [foreign-key-link {:style style
+               [foreign-key-link {:label label
+                                  :style style
                                   :endpoint endpoint
                                   :token token
                                   :defs defs
@@ -70,8 +71,8 @@
                (enum-input style label info value-atom)
 
                :else
-               (text-input style label info value-atom))))
-  )
+               (text-input style label info value-atom)))))
+
 (define-stateful-component form [{:keys [endpoint token table layout style
                                          header-fn footer-fn] :as opts}]
   {:state state}
@@ -80,7 +81,6 @@
     (if-not defs
       (element style :loading-indicator)
       [:<>
-       [:pre (pr-str defs)]
        (when header-fn
          (header-fn current-state))
        (doall

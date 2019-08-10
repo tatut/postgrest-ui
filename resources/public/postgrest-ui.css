@@ -91,3 +91,17 @@
     font-weight: bold;
     margin: 5px;
 }
+
+.postgrest-ui-form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.postgrest-ui-form-field {
+    display: flex;
+    flex-direction: row;
+}
+
+.postgrest-ui-form-field label {
+    min-width: 200px;
+}

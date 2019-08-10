@@ -91,27 +91,31 @@
       :label str
       :batch-size 20}]])
 
-(defn form-header [form-data]
-  [:<>
-   [:div "FORM HEADER " (pr-str form-data)]
-   [:br]])
+
 
 (defn form-footer [form-data]
   [:<>
    [:br]
    [:div "FORM FOOTER " (pr-str form-data)]])
 
+(defn form-header [form-data]
+  [:<>
+   [:div "FORM HEADER " (pr-str form-data)]
+   [:br]])
+
+(defmethod display/label ["film" "language_id"] [_ _] "Language")
+
 (defn form-view []
   [form/form
    {:endpoint endpoint
     :table "film"
     :layout [{:group :general :label "General" :columns ["title" "description" "rating" "length"]}
-             {:group :info :label "Categories and languages" :columns [{:link-to "category" :display "name"}
-                                                                       {:column "language_id"
-                                                                        :option-label "name"}]}
-             {:group :people :label "Actors" :columns [{:link-to "actor"}]}]
-    :header-fn form-header
-    :footer-fn form-footer}])
+             {:group :info :label "Language"
+              :columns [;; Foreign key reference, show selection from the rows with
+                        ;; :option-label column as the label
+                        {:column "language_id"
+                         :option-label "name"}]}]
+    :header-fn form-header}])
 
 (defn ^:export main []
   (elements/set-default-style! :material)

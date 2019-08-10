@@ -1,6 +1,7 @@
 (ns postgrest-ui.impl.style.default-style
   "Implements element rendering for the default style"
-  (:require [postgrest-ui.elements :refer [element]]))
+  (:require [postgrest-ui.elements :refer [element]]
+            [clojure.string :as str]))
 
 ;; Generic elements
 (defmethod element [:default :loading-indicator] [_ _ & _]
@@ -70,3 +71,50 @@
 
 ;(defmethod element [:default ] [_ _ & args] `[:foo ~args])
 ;(defmethod element [:default ] [_ _ & args] `[:foo ~args])
+
+
+;; Form layout
+
+(defmethod element [:default :form-group] [_ _ & [label fields]]
+  [:div.postgrest-ui-form-group
+   [:h3.postgrest-ui-form-group-label label]
+   (into [:<>]
+         (map-indexed
+          (fn [i field]
+            (with-meta field {:key i})) fields))])
+
+;; Elements for input fields
+
+(defmethod element [:default :text-input] [_ _ & [{:keys [label name type format value value-atom]}]]
+  (let [[read write field-type]
+        (case type
+          "integer" [js/parseInt str "number"]
+          [identity identity "text"])]
+    [:div.postgrest-ui-form-field
+     [:label {:for name} label]
+     [:input {:type field-type
+              :name name
+              :value (or (some-> @value-atom read) "")
+              :on-change #(reset! value-atom
+                                  (let [v (-> % .-target .-value)]
+                                    (when-not (str/blank? v)
+                                      (read v))))}]]))
+
+(defmethod element [:default :select-input] [_ _ & [{:keys [label name options value-atom
+                                                             option-label option-value]
+                                                      :or {option-label identity
+                                                           option-value identity}}]]
+  (let [option-by-value (zipmap (map (comp str option-value) options)
+                                options)]
+    [:div.postgrest-ui-form-field
+     [:label {:for name} label]
+     [:select {:value (or @value-atom "")
+               :name name
+               :on-change #(reset! value-atom (some-> % .-target .-value option-by-value option-value))}
+      ;; Empty selection
+      [:option {:value ""} ""]
+
+      (for [option options]
+        ^{:key option}
+        [:option {:value (option-value option)}
+         (option-label option)])]]))
