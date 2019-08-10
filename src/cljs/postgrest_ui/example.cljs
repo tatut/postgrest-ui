@@ -7,6 +7,7 @@
             [postgrest-ui.impl.style.material]
             [postgrest-ui.elements :as elements]
             [postgrest-ui.components.filters :as filters]
+            [postgrest-ui.components.form :as form]
             [reagent.core :as r]
             [clojure.string :as str]))
 
@@ -61,6 +62,7 @@
 (defn filters [opts]
   [:div (pr-str opts)])
 (def endpoint "http://localhost:3000")
+
 (defn listing-view []
   [:div
    [:h3 "Movie listing"]
@@ -89,7 +91,29 @@
       :label str
       :batch-size 20}]])
 
+(defn form-header [form-data]
+  [:<>
+   [:div "FORM HEADER " (pr-str form-data)]
+   [:br]])
+
+(defn form-footer [form-data]
+  [:<>
+   [:br]
+   [:div "FORM FOOTER " (pr-str form-data)]])
+
+(defn form-view []
+  [form/form
+   {:endpoint endpoint
+    :table "film"
+    :layout [{:group :general :label "General" :columns ["title" "description"]}
+             {:group :info :label "Categories and languages" :columns [{:link-to "category"}
+                                                                       {:link-to "language"}]}
+             {:group :people :label "Actors" :columns [{:link-to "actor"}]}]
+    :header-fn form-header
+    :footer-fn form-footer}])
+
 (defn ^:export main []
   (elements/set-default-style! :material)
-  (r/render [listing-view]
+  (r/render #_[listing-view]
+            [form-view]
             (.getElementById js/document "app")))

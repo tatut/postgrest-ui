@@ -87,3 +87,21 @@
 
 (defmethod element [:material :item-view-value ] [_ _ & args]
   (into [(mc :Typography) {:variant "body2"}] args))
+
+
+;; Elements for form layout
+(defmethod element [:material :form-group] [_ _ & [label fields]]
+  [(mc :Card)
+   [(mc :CardHeader) {:title label}]
+   [(mc :CardContent)
+    (into [:<>]
+          (map-indexed
+           (fn [i field]
+             (with-meta field {:key i})) fields))]])
+
+;; Elements for input fields
+
+(defmethod element [:material :text-input] [_ _ & [{:keys [label type format value]}]]
+  [(mc :TextField)
+   {:label label
+    :value value}])

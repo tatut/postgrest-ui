@@ -15,3 +15,8 @@
           (some (fn [[column definition]]
                   (when (primary-key? definition) column))
                 props))))
+
+(defn column-info [defs table column]
+  (merge
+   (get-in defs ["definitions" table "properties" column])
+   {"required?" (some #(= column %) (get-in defs ["definitions" table "required"]))}))
