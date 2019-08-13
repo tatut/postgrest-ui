@@ -5,8 +5,14 @@
 
 (defonce fetch-impl (atom js/fetch))
 
+(defn- headers [& header-maps]
+  (clj->js
+   (apply merge
+          {"X-Requested-With" "postgrest-ui"}
+          header-maps)))
+
 (defn load-swagger-json [endpoint callback]
-  (-> (@fetch-impl endpoint)
+  (-> (@fetch-impl endpoint #js {:headers (headers)})
       (.then #(.json %))
       (.then #(js->clj %))
       (.then callback)))
@@ -121,12 +127,11 @@
                                   (str/join "," (map format-order-by order-by))))])))]
     (-> (@fetch-impl url
          #js {:method "GET"
-              :headers (clj->js
-                        (merge
-                         (when offset
-                           {"Range" (str offset "-" (dec (+ offset limit)))
-                            "Range-Unit" "items"})
-                         (authorization-header token)))})
+              :headers (headers
+                        (when offset
+                          {"Range" (str offset "-" (dec (+ offset limit)))
+                           "Range-Unit" "items"})
+                        (authorization-header token))})
         json->clj)))
 
 (defn get-by-id [endpoint token defs {:keys [table select]} id]
@@ -137,6 +142,6 @@
                  "&" pk "=eq." id)]
     (-> (@fetch-impl url
          #js {:method "GET"
-              :headers (clj->js (authorization-header token))})
+              :headers (headers (authorization-header token))})
         json->clj
         (.then first))))
