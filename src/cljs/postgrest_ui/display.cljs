@@ -13,7 +13,8 @@
   to just converting it to string."
   (:require [clojure.string :as str]
             [goog.date :as goog-date]
-            [goog.i18n.DateTimeFormat]))
+            [goog.i18n.DateTimeFormat]
+            [postgrest-ui.impl.schema :as schema]))
 
 (def ^:const contexts #{:listing :item-view :default})
 
