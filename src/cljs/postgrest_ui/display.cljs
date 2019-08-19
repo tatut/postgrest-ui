@@ -69,8 +69,10 @@
           (format-fields "one" value)))
 
       ;; Regular value, call format-value with column info
-      (let [{:strs [type format]} (schema/column-info defs table column)]
-        (format-value ctx type format value)))))
+      (if (nil? value)
+        "" ; don't try to render NULL database value
+        (let [{:strs [type format]} (schema/column-info defs table column)]
+          (format-value ctx type format value))))))
 
 (defmethod label :default [table column]
   (if (map? column)
