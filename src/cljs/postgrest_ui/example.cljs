@@ -63,6 +63,7 @@
   [:div (pr-str opts)])
 (def endpoint "http://localhost:3000")
 
+(declare form-view)
 (defn listing-view []
   [:div
    [:h3 "Movie listing"]
@@ -70,7 +71,6 @@
      {:endpoint endpoint
       :table "film"
       :filters-view (r/partial filters/simple-search-form ["title" "description"])
-      ;:filter {"description" [:ilike "%scientist%"]}
       :select ["film_id" "title" "description"
                {:table "actor"
                 :select ["first_name" "last_name"]}]
@@ -78,13 +78,14 @@
                 [item-view/item-view
                  {:endpoint endpoint
                   :table "film"
-                  :select ["title" "description"
+                  :select ["title" "description" "rating" "length" "language_id"
                            {:table "actor"
                             :select ["first_name" "last_name"]}
                            {:table "category"
                             :select ["name"]}
                            {:table "language"
-                            :select ["name"]}]}
+                            :select ["name"]}]
+                  :view form-view}
                  (get item "film_id")])
       :column-widths ["5%" "20%" "45%" "30%"]
       :order-by [["film_id" :asc]]
@@ -105,20 +106,24 @@
 
 (defmethod display/label ["film" "language_id"] [_ _] "Language")
 
-(defn form-view []
-  [form/form
-   {:endpoint endpoint
-    :table "film"
-    :layout [{:group :general :label "General" :columns ["title" "description" "rating" "length"]}
-             {:group :info :label "Language"
-              :columns [;; Foreign key reference, show selection from the rows with
-                        ;; :option-label column as the label
-                        {:column "language_id"
-                         :option-label "name"}]}]
-    :header-fn form-header}])
+(defn form-view [item]
+  (r/with-let [state (r/atom {:data item})]
+    [form/form
+     {:endpoint endpoint
+      :table "film"
+      :state @state
+      :set-state! #(reset! state %)
+      :layout [{:group :general :label "General" :columns ["title" "description" "rating" "length"]}
+               {:group :info :label "Language"
+                :columns [;; Foreign key reference, show selection from the rows with
+                          ;; :option-label column as the label
+                          {:column "language_id"
+                           :option-label "name"}]}]
+      ;:class {"title" (<class (my-precious-style))}
+      :header-fn form-header}]))
 
 (defn ^:export main []
   (elements/set-default-style! :material)
-  (r/render #_[listing-view]
-            [form-view]
+  (r/render [listing-view]
+            #_[form-view]
             (.getElementById js/document "app")))

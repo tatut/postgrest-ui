@@ -27,7 +27,7 @@
                                (element style :item-view-label
                                         (display/label table column))
                                (element style :item-view-value
-                                        [display/disp :item-view table column value]))
+                                        [display/disp :item-view table column value defs]))
                       {:key column})))))
 
       ;; Load item

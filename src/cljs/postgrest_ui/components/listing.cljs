@@ -28,7 +28,7 @@
                                 {:key column})))
                           select (or column-widths (repeat nil)))))))
 
-(defn- listing-batch [_ _ _]
+(defn- listing-batch [_ _ _ _]
   (r/create-class
    {:should-component-update
     (fn [_
@@ -51,47 +51,48 @@
                  drawer
                  drawer-open
                  toggle-drawer!]}
-         start-offset items]
-      (element style :listing-table-body
-               (doall
-                (mapcat
-                 (fn [i item]
-                   (let [drawer-open? (get drawer-open item)]
-                     (into [(with-meta
-                              (element style :listing-table-row
-                                       (+ start-offset i)
-                                       (cond
-                                         (nil? drawer) :no-drawer
-                                         drawer-open? :drawer-open
-                                         :else :drawer-closed)
-                                       (when drawer
-                                         #(do
-                                            (.preventDefault %)
-                                            (toggle-drawer! item)))
+         start-offset items defs]
+      (element
+       style :listing-table-body
+       (doall
+        (mapcat
+         (fn [i item]
+           (let [drawer-open? (get drawer-open item)]
+             (into [(with-meta
+                      (element style :listing-table-row
+                               (+ start-offset i)
+                               (cond
+                                 (nil? drawer) :no-drawer
+                                 drawer-open? :drawer-open
+                                 :else :drawer-closed)
+                               (when drawer
+                                 #(do
+                                    (.preventDefault %)
+                                    (toggle-drawer! item)))
 
-                                       ;; cells
-                                       (for [column select
-                                             :let [value (get item (if (map? column)
-                                                                     (:table column)
-                                                                     column))
-                                                   fmt (get format column)]]
-                                         (with-meta
-                                           (element style :listing-table-cell
-                                                    (if fmt
-                                                      ;; If formatter is given, use that directly
-                                                      (fmt item)
+                               ;; cells
+                               (for [column select
+                                     :let [value (get item (if (map? column)
+                                                             (:table column)
+                                                             column))
+                                           fmt (get format column)]]
+                                 (with-meta
+                                   (element style :listing-table-cell
+                                            (if fmt
+                                              ;; If formatter is given, use that directly
+                                              (fmt item)
 
-                                                      ;; Otherwise call multimethod to render value
-                                                      [display/disp :listing table column value]))
-                                           {:key column})))
-                              {:key i})]
+                                              ;; Otherwise call multimethod to render value
+                                              [display/disp :listing table column value defs]))
+                                   {:key column})))
+                      {:key i})]
 
-                           ;; If drawer component is specified and open for this row
-                           (when (and drawer (get drawer-open item))
-                             [(with-meta
-                                (element style :listing-table-drawer (count select) drawer item)
-                                {:key (str i "-drawer")})]))))
-                 (range) items))))}))
+                   ;; If drawer component is specified and open for this row
+                   (when (and drawer (get drawer-open item))
+                     [(with-meta
+                        (element style :listing-table-drawer (count select) drawer item)
+                        {:key (str i "-drawer")})]))))
+         (range) items))))}))
 
 (define-stateful-component listing [{:keys [endpoint token table label batch-size
                                             column-widths drawer style]
@@ -151,7 +152,7 @@
                                                                          (if (set %)
                                                                            (disj set %)
                                                                            (conj set %)))))}))
-                     (* i batch-size) batch])
+                     (* i batch-size) batch defs])
                   batches))
                 (when loading?
                   (with-meta
@@ -176,6 +177,7 @@
          listing-state :listing
          timeout :timeout} @state]
     [:<>
+     ^{:key "filters"}
      [filters-view {:state next-where
                     :set-state! (fn [next-where]
                                   (when timeout
@@ -187,6 +189,7 @@
                                                                        (fn [state]
                                                                          (assoc state :where (:next-where state))))
                                                                search-timeout)))}]
+     ^{:key "listing"}
      [listing (assoc opts
                      :state listing-state
                      :set-state! #(swap! state assoc :listing %)
