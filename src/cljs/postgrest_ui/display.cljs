@@ -27,7 +27,7 @@
                          [ctx type format]))
 
 
-(defmethod format-value :default [_ _ value] (str value))
+(defmethod format-value :default [_ _ _ value] (str value))
 
 (defmethod format-value [:default "string" "daterange"] [_ _ _ value]
   ;; dates are always represented as having non-exclusive end
