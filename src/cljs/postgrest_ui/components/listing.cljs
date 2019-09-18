@@ -9,7 +9,7 @@
             [clojure.string :as str])
   (:require-macros [postgrest-ui.impl.state :refer [define-stateful-component]]))
 
-(defn- listing-header [{:keys [table select on-click column-widths style]} order-by]
+(defn- listing-header [{:keys [table select columns on-click column-widths style]} order-by]
   (element style :listing-table-head
            (element style :listing-table-header-row
                     (doall
@@ -26,7 +26,7 @@
                                          (display/label table column)
                                          order)
                                 {:key column})))
-                          select (or column-widths (repeat nil)))))))
+                          (or columns select) (or column-widths (repeat nil)))))))
 
 (defn- listing-batch [_ _ _ _]
   (r/create-class
@@ -47,7 +47,7 @@
         (not= (set (keep old-drawer-open old-items))
               (set (keep new-drawer-open new-items))))))
     :reagent-render
-    (fn [{:keys [table select style format accessor
+    (fn [{:keys [table select columns style format accessor
                  drawer
                  drawer-open
                  toggle-drawer!]}
@@ -71,7 +71,7 @@
                                     (toggle-drawer! item)))
 
                                ;; cells
-                               (for [column select
+                               (for [column (or columns select)
                                      :let [get-value (get accessor column
                                                           #(get % (if (map? column)
                                                                     (:table column)
@@ -145,6 +145,7 @@
                   (fn [i batch]
                     ^{:key i}
                     [listing-batch (merge (select-keys opts [:table :select :label :drawer :style
+                                                             :columns
                                                              :format :accessor])
                                           (when drawer
                                             {:drawer drawer
