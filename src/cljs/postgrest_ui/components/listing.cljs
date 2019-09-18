@@ -132,7 +132,7 @@
       [:<>
        (element style :listing-table
                 [listing-header (merge
-                                 (select-keys opts [:table :select :style])
+                                 (select-keys opts [:table :select :columns :style])
                                  {:on-click (fn [col current-order-by]
                                               (swap! state merge {:batches nil ; reload everything
                                                                   :order-by [[col (if (= :asc current-order-by)
