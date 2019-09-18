@@ -5,6 +5,7 @@
 
 (defonce fetch-impl (atom js/fetch))
 
+
 (defn- headers [& header-maps]
   (clj->js
    (apply merge
@@ -112,7 +113,7 @@
 
 (defn load-range
   "Load a range of items. Returns promise."
-  [endpoint token defs {:keys [table select order-by where]} offset limit]
+  [endpoint token defs {:keys [table select order-by where on-fetch-response]} offset limit]
   (let [url (str (table-endpoint-url endpoint defs table) "?"
                  (str/join
                   "&"
@@ -128,10 +129,15 @@
     (-> (@fetch-impl url
          #js {:method "GET"
               :headers (headers
+                        {"Prefer" "count=exact"}
                         (when offset
                           {"Range" (str offset "-" (dec (+ offset limit)))
                            "Range-Unit" "items"})
                         (authorization-header token))})
+        (.then (fn [response]
+                 (when on-fetch-response
+                   (on-fetch-response response))
+                 response))
         json->clj)))
 
 (defn get-by-id [endpoint token defs {:keys [table select]} id]

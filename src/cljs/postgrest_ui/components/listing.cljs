@@ -123,7 +123,7 @@
                         (swap! state merge {:loading? true
                                             :current-where (:where opts)})
                         (-> (fetch/load-range endpoint token defs
-                                              (merge (select-keys opts [:table :select :where])
+                                              (merge (select-keys opts [:table :select :where :on-fetch-response])
                                                      {:order-by order-by})
                                               (* batch-number batch-size)
                                               batch-size)
