@@ -47,7 +47,7 @@
         (not= (set (keep old-drawer-open old-items))
               (set (keep new-drawer-open new-items))))))
     :reagent-render
-    (fn [{:keys [table select style format
+    (fn [{:keys [table select style format accessor
                  drawer
                  drawer-open
                  toggle-drawer!]}
@@ -72,9 +72,11 @@
 
                                ;; cells
                                (for [column select
-                                     :let [value (get item (if (map? column)
-                                                             (:table column)
-                                                             column))
+                                     :let [get-value (get accessor column
+                                                          #(get % (if (map? column)
+                                                                    (:table column)
+                                                                    column)))
+                                           value (get-value item)
                                            fmt (get format column)]]
                                  (with-meta
                                    (element style :listing-table-cell
@@ -142,7 +144,8 @@
                  (map-indexed
                   (fn [i batch]
                     ^{:key i}
-                    [listing-batch (merge (select-keys opts [:table :select :label :drawer :style :format])
+                    [listing-batch (merge (select-keys opts [:table :select :label :drawer :style
+                                                             :format :accessor])
                                           (when drawer
                                             {:drawer drawer
                                              :drawer-open drawer-open
