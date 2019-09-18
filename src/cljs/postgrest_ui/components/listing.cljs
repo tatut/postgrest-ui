@@ -9,7 +9,7 @@
             [clojure.string :as str])
   (:require-macros [postgrest-ui.impl.state :refer [define-stateful-component]]))
 
-(defn- listing-header [{:keys [table select columns on-click column-widths style]} order-by]
+(defn- listing-header [{:keys [table select columns on-click column-widths style header-fn]} order-by]
   (element style :listing-table-head
            (element style :listing-table-header-row
                     (doall
@@ -18,14 +18,19 @@
                                                 (when (= col column)
                                                   dir))
                                               order-by)]
-                              (with-meta
-                                (element style :listing-table-header-cell
-                                         (merge {:on-click #(on-click column order)}
-                                                (when width
-                                                  {:style {:width width}}))
-                                         (display/label table column)
-                                         order)
-                                {:key column})))
+                              (when header-fn
+                                ^{:key column}
+                                (header-fn {:column column
+                                            :width width
+                                            :order order})
+                                (with-meta
+                                  (element style :listing-table-header-cell
+                                           (merge {:on-click #(on-click column order)}
+                                                  (when width
+                                                    {:style {:width width}}))
+                                           (display/label table column)
+                                           order)
+                                  {:key column}))))
                           (or columns select) (or column-widths (repeat nil)))))))
 
 (defn- listing-batch [_ _ _ _]
@@ -132,7 +137,7 @@
       [:<>
        (element style :listing-table
                 [listing-header (merge
-                                 (select-keys opts [:table :select :columns :style])
+                                 (select-keys opts [:table :select :columns :style :header-fn])
                                  {:on-click (fn [col current-order-by]
                                               (swap! state merge {:batches nil ; reload everything
                                                                   :order-by [[col (if (= :asc current-order-by)
