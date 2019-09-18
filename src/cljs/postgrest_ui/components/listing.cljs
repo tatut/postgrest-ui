@@ -17,20 +17,20 @@
                             (let [order (some (fn [[col dir]]
                                                 (when (= col column)
                                                   dir))
-                                              order-by)]
-                              (when header-fn
-                                ^{:key column}
-                                (header-fn {:column column
-                                            :width width
-                                            :order order})
-                                (with-meta
+                                              order-by)
+                                  opts (merge {:on-click #(on-click column order)}
+                                              (when width
+                                                {:style {:width width}}))]
+                              (with-meta
+                                (if header-fn
+                                  (header-fn (merge opts
+                                                    {:column column
+                                                     :order order}))
                                   (element style :listing-table-header-cell
-                                           (merge {:on-click #(on-click column order)}
-                                                  (when width
-                                                    {:style {:width width}}))
+                                           opts
                                            (display/label table column)
-                                           order)
-                                  {:key column}))))
+                                           order))
+                                {:key column})))
                           (or columns select) (or column-widths (repeat nil)))))))
 
 (defn- listing-batch [_ _ _ _]
