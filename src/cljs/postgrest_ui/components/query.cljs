@@ -16,7 +16,7 @@
         (.then (fetch/load-range endpoint token defs
                                  (select-keys opts [:table :select :order-by :where])
                                  nil nil)
-               #(assoc state :results %)))
+               #(swap! state assoc :results %)))
       (if results
         [view-fn results]
         (element style :loading-indicator)))
