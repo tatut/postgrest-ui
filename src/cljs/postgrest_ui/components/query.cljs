@@ -11,7 +11,7 @@
    :component-will-receive-props
    (reset! state {})}
   (if-let [defs @(registry/load-defs endpoint)]
-    (let [results (:results state)]
+    (let [results (:results @state)]
       (when (nil? results)
         (.then (fetch/load-range endpoint token defs
                                  (select-keys opts [:table :select :order-by :where])
