@@ -60,8 +60,15 @@
 (defmethod element [:material :listing-table-body] [_ _ & args]
   (into [(mc :TableBody)] args))
 
-(defmethod element [:material :listing-table-row] [_ _ & [i drawer-state on-click & cells]]
-  (into [(mc :TableRow) {:onClick on-click}] cells))
+(defmethod element [:material :listing-table-row] [_ _ & [i drawer-state on-click row-class & cells]]
+  (into [(mc :TableRow) (merge
+                          (when on-click
+                            {:tab-index 0
+                             :on-key-down (r/partial (fn [e]
+                                                       (when (= (.-key e) "Enter")
+                                                         (on-click))))})
+                          {:class row-class
+                           :onClick on-click})] cells))
 
 (defmethod element [:material :listing-table-cell] [_ _ & content]
   (into [(mc :TableCell)] content))
@@ -86,7 +93,7 @@
 (defmethod element [:material :item-view-label] [_ _ & args]
   (into [(mc :Typography) {:variant "h5"}] args))
 
-(defmethod element [:material :item-view-value ] [_ _ & args]
+(defmethod element [:material :item-view-value] [_ _ & args]
   (into [(mc :Typography) {:variant "body2"}] args))
 
 
@@ -98,10 +105,10 @@
     (into [(mc :Grid) {:container true
                        :direction "column"}]
           (map-indexed
-           (fn [i field]
-             ^{:key i}
-             [(mc :Grid) {:item true :xs 12}
-              field]) fields))]])
+            (fn [i field]
+              ^{:key i}
+              [(mc :Grid) {:item true :xs 12}
+               field]) fields))]])
 
 ;; Elements for input fields
 
@@ -123,7 +130,7 @@
                                                              option-label option-value]
                                                       :or {option-label identity
                                                            option-value identity}}]]
-  (let [min-width (max 100 (* (count label) 10))] ; simple min width heuristic
+  (let [min-width (max 100 (* (count label) 10))]           ; simple min width heuristic
     [(mc :FormControl) {:style {:min-width min-width}}
      [(mc :InputLabel) {:htmlFor name} label]
      [(mc :Select) {:value (or @value-atom "")
@@ -131,7 +138,7 @@
                                         (let [v (-> % .-target .-value)]
                                           (when-not (str/blank? v) v)))
                     :input (r/as-element
-                            [(mc :Input) {:name name}])}
+                             [(mc :Input) {:name name}])}
 
       ;; Empty selection
       [(mc :MenuItem) {:value ""} ""]
