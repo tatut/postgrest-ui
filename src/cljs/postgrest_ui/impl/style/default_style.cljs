@@ -1,7 +1,8 @@
 (ns postgrest-ui.impl.style.default-style
   "Implements element rendering for the default style"
   (:require [postgrest-ui.elements :refer [element]]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [reagent.core :as r]))
 
 ;; Generic elements
 (defmethod element [:default :loading-indicator] [_ _ & _]
@@ -33,15 +34,23 @@
 
 (defmethod element [:default :listing-table-body] [_ _ & args] `[:tbody ~args])
 
-(defmethod element [:default :listing-table-row] [_ _ & [i drawer-state on-click & cells]]
-  [:tr {:class (str (if (even? i)
-                      "postgrest-ui-listing-row-even"
-                       "postgrest-ui-listing-row-odd")
-                     (case drawer-state
-                       :no-drawer ""
-                       :drawer-open " postgrest-ui-listing-row-drawer-open"
-                       :drawer-closed " postgrest-ui-listing-row-drawer-closed"))
-        :on-click on-click}
+(defmethod element [:default :listing-table-row] [_ _ & [i drawer-state on-click row-class & cells]]
+  [:tr (merge
+         (when on-click
+           {:tab-index 0
+            :on-key-down (r/partial (fn [e]
+                                      (when (= (.-key e) "Enter")
+                                        (on-click))))})
+         {:class (str (if (even? i)
+                        "postgrest-ui-listing-row-even"
+                        "postgrest-ui-listing-row-odd")
+                      (case drawer-state
+                        :no-drawer ""
+                        :drawer-open " postgrest-ui-listing-row-drawer-open"
+                        :drawer-closed " postgrest-ui-listing-row-drawer-closed")
+                      (when row-class
+                        (str " " row-class)))
+          :on-click on-click})
    (doall cells)])
 
 (defmethod element [:default :listing-table-cell] [_ _ & content] `[:td ~@content])

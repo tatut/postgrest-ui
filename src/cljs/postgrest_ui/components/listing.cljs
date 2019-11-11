@@ -40,20 +40,20 @@
          [_ {old-drawer-open :drawer-open} _ old-items]
          [_ {new-drawer-open :drawer-open} _ new-items]]
       (or
-       ;; Items have changed (shouldn't happen in normal listing views)
+         ;; Items have changed (shouldn't happen in normal listing views)
        (not (identical? old-items new-items))
 
-       ;; Drawer state change
+         ;; Drawer state change
        (and
-        ;; Some drawer state has changed
+           ;; Some drawer state has changed
         (not= old-drawer-open new-drawer-open)
 
-        ;; And it affects a row in this batch
+           ;; And it affects a row in this batch
         (not= (set (keep old-drawer-open old-items))
               (set (keep new-drawer-open new-items))))))
     :reagent-render
     (fn [{:keys [table select columns style format accessor
-                 drawer
+                 drawer on-row-click row-class
                  drawer-open
                  toggle-drawer!]}
          start-offset items defs]
@@ -70,12 +70,16 @@
                                  (nil? drawer) :no-drawer
                                  drawer-open? :drawer-open
                                  :else :drawer-closed)
-                               (when drawer
-                                 #(do
-                                    (.preventDefault %)
-                                    (toggle-drawer! item)))
+                               (if on-row-click
+                                 (r/partial on-row-click item)
+                                 (when drawer
+                                   #(do
+                                      (.preventDefault %)
+                                      (toggle-drawer! item))))
+                               (when row-class
+                                 row-class)
 
-                               ;; cells
+                                   ;; cells
                                (for [column (or columns select)
                                      :let [get-value (get accessor column
                                                           #(get % (if (map? column)
@@ -86,15 +90,15 @@
                                  (with-meta
                                    (element style :listing-table-cell
                                             (if fmt
-                                              ;; If formatter is given, use that directly
+                                                  ;; If formatter is given, use that directly
                                               (fmt item)
 
-                                              ;; Otherwise call multimethod to render value
+                                                  ;; Otherwise call multimethod to render value
                                               [display/disp :listing table column value defs]))
                                    {:key column})))
                       {:key i})]
 
-                   ;; If drawer component is specified and open for this row
+                       ;; If drawer component is specified and open for this row
                    (when (and drawer (get drawer-open item))
                      [(with-meta
                         (element style :listing-table-drawer (count select) drawer item)
@@ -102,7 +106,7 @@
          (range) items))))}))
 
 (define-stateful-component listing [{:keys [endpoint token table label batch-size
-                                            column-widths drawer style]
+                                            column-widths drawer style on-row-click row-class]
                                      :or {batch-size 20
                                           label str}
                                      :as opts}]
@@ -150,7 +154,7 @@
                   (fn [i batch]
                     ^{:key i}
                     [listing-batch (merge (select-keys opts [:table :select :label :drawer :style
-                                                             :columns
+                                                             :columns :on-row-click :row-class
                                                              :format :accessor])
                                           (when drawer
                                             {:drawer drawer
