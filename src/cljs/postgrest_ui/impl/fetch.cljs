@@ -59,7 +59,7 @@
    :like #(str "like." (str/replace % "%" "*")) ; use * instead of %
    :ilike #(str "ilike." (str/replace % "%" "*"))
 
-   :in #(str "in.(" (str/join "," (map prn %)) ")")
+   :in #(str "in.(" (str/join "," (map str %)) ")")
 
    ;; Exact equality
    :null? (constantly "is.null")
@@ -73,8 +73,8 @@
    :phfts #(str "phfts." %)
 
    ;; Array element checks
-   :contains? #(str "cs.{" (str/join "," (map prn %)) "}")
-   :contained-in? #(str "cd.{" (str/join "," (map prn %)) "}")
+   :contains? #(str "cs.{" (str/join "," (map str %)) "}")
+   :contained-in? #(str "cd.{" (str/join "," (map str %)) "}")
 
    ;; Range checks
    :overlaps? #(str "ov.[" %1 "," %2 "]")
