@@ -7,9 +7,7 @@
 
 
 (define-stateful-component query [{:keys [endpoint token table select order-by where style] :as opts} view-fn]
-  {:state state
-   :component-will-receive-props
-   (reset! state {})}
+  {:state state}
   (if-let [defs @(registry/load-defs endpoint)]
     (let [results (:results @state)]
       (when (nil? results)
