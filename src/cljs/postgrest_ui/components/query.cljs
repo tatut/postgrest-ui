@@ -16,6 +16,11 @@
                                  nil nil)
                #(swap! state assoc :results %)))
       (if results
-        [view-fn results]
+        (if (vector? view-fn)
+          ;; If view-fn is a hiccup vector, add results as last parameter
+          (conj view-fn results)
+
+          ;; Otherwise call view-fn as a component function
+          [view-fn results])
         (element style :loading-indicator)))
     (element style :loading-indicator)))
